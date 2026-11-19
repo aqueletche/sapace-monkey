@@ -2,7 +2,7 @@
 //  Macaco Espacial — Service Worker
 //  >>> A CADA NOVA VERSÃO, AUMENTE O NÚMERO ABAIXO <<<
 // ============================================================
-const VERSION = '1.2.0';
+const VERSION = '1.3.1';
 
 const CACHE = 'macaco-espacial-' + VERSION;
 const FILES = [
