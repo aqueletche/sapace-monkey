@@ -2,7 +2,7 @@
 //  StarChimp — Service Worker
 //  >>> A CADA NOVA VERSÃO, AUMENTE O NÚMERO ABAIXO <<<
 // ============================================================
-const VERSION = '2.1.0';
+const VERSION = '2.1.1';
 
 const CACHE = 'macaco-espacial-' + VERSION;
 const FILES = [

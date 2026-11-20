@@ -1,5 +1,7 @@
 # 🐵 StarChimp — v2.1
 
+![StarChimp](starchimp-logo.png)
+
 Jogo infinito 2D com física: balance entre asteroides, fuja da tempestade solar e colete bananas!
 Funciona como app instalável (PWA) em Android e iPhone, inclusive sem internet.
 
