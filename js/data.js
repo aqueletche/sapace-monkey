@@ -1,4 +1,4 @@
-// Macaco Espacial — dados, save e configurações
+// StarChimp — dados, save e configurações
 'use strict';
 const $=s=>document.querySelector(s);
 const cv=$('#c');let ctx=cv.getContext('2d');
@@ -24,7 +24,7 @@ const WORLDS=[
  {id:'gelo',nome:'Planeta de Gelo',ic:'🧊',bg:['#06142b','#0f3a66','#3f8fc0'],abyss:'120,220,255',star:'#cfefff',rock:[['#e6f7ff','#7fb6d6'],['#c4ecff','#5c93b8'],['#f0fbff','#8fc3de']],mus:{base:392,roots:[0,5,-2,3],tempo:.14,wave:'triangle'},snow:1,comet:.8,portal:1,bounce:1.75},
  {id:'lava',nome:'Cinturão de Lava',ic:'🌋',bg:['#1a0505','#4a0f0a','#8a2a0a'],abyss:'255,120,0',star:'#ffcf9f',rock:[['#6a4436','#2a1510'],['#7b4b3b','#2b120a'],['#5d3b32','#1e0c08']],mus:{base:294,roots:[0,-2,-5,-7],tempo:.15,wave:'triangle'},ember:1,comet:2,portal:.7,lava:1},
  {id:'neon',nome:'Galáxia Neon',ic:'💜',bg:['#000000','#12002b','#2b0050'],abyss:'0,255,200',star:'#99ffff',rock:[['#2a2a48','#101020'],['#30304e','#151528'],['#28284a','#0d0d1d']],mus:{base:440,roots:[0,3,-4,-2],tempo:.11,wave:'square'},grid:1,comet:1.3,portal:2,neon:['#ff2e9a','#00f0ff','#b14dff']}];
-const WORLD_LEN=[800,1000,1200,1500];
+const WORLD_LEN=[800,1000,1200,1500],WSTART=[0,800,1800,3000];
 function worldAt(d){let tot=0,i=0;while(i<400){const L=WORLD_LEN[i%4];if(d<tot+L)return{i:i%4,lap:Math.floor(i/4)};tot+=L;i++;}return{i:0,lap:0};}
 /* ---------- DATAS ---------- */
 const dstr=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -62,10 +62,29 @@ const ACH=[
  {id:'desafio',ic:'🏁',nome:'Desafiante',desc:'Cumpra um Desafio do Dia',rw:100,ok:L=>L.dailyDone>=1}];
 
 const isLocked=id=>id==='impossivel'&&(SAVE.bestD.dificil||0)<UNLOCK_M;
+/* ---------- EDIÇÕES ESPECIAIS (datas comemorativas) ---------- */
+// de/ate no formato MM-DD (pode virar o ano). teaser = dias antes em que a loja já mostra a prévia.
+const SEASONS=[
+ {id:'natal',nome:'Natal',ic:'🎄',de:'12-01',ate:'01-06',teaser:15},
+ {id:'halloween',nome:'Halloween',ic:'🎃',de:'10-20',ate:'11-02',teaser:10}];
+let FORCE_SEASON=null,SEASON_CACHE=null,SEASON_T=0;
+function seasonItems(id){const r=[];for(const c in CATS)for(const it of CATS[c].items)if(it.season===id)r.push([c,it]);return r;}
+function seasonInfo(){const now=new Date();
+ if(FORCE_SEASON){const se=SEASONS.find(s=>s.id===FORCE_SEASON.id);if(se)return{se,active:FORCE_SEASON.active!==false,days:FORCE_SEASON.days||9};}
+ const n=(now.getMonth()+1)*100+now.getDate();
+ for(const se of SEASONS){if(!seasonItems(se.id).length)continue;const [sm,sd]=se.de.split('-').map(Number),[em,ed]=se.ate.split('-').map(Number),s=sm*100+sd,e=em*100+ed,wrap=e<s;
+  const active=wrap?(n>=s||n<=e):(n>=s&&n<=e);
+  if(active){const end=new Date(now.getFullYear()+(wrap&&n>=s?1:0),em-1,ed,23,59,59);return{se,active:true,days:Math.max(1,Math.ceil((end-now)/864e5)),end};}
+  let st=new Date(now.getFullYear(),sm-1,sd);if(st<now)st=new Date(now.getFullYear()+1,sm-1,sd);const dd=Math.ceil((st-now)/864e5);
+  if(dd<=se.teaser)return{se,active:false,days:dd,start:st};}
+ return null;}
+function curSeason(){const t=Date.now();if(t-SEASON_T>60000){SEASON_T=t;SEASON_CACHE=seasonInfo();}return SEASON_CACHE;}
+const seasonOn=id=>{const s=curSeason();return!!(s&&s.active&&s.se.id===id);};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const KEY='macacoEspacial_v1';
 const DEF={best:0,bananas:0,runs:0,up:{rope:0,fuel:0,magnet:0,shield:0},skins:['classico'],skin:'classico',own:{traje:['classico'],jet:['padrao'],pelo:['castanho'],hat:['nenhum'],glass:['nenhum'],trail:['nenhum']},eq:{traje:'classico',jet:'padrao',pelo:'castanho',hat:'nenhum',glass:'nenhum',trail:'nenhum'},mig2:false,
   set:{sfx:true,music:true,vib:true,swap:false,lite:false,liteAsked:false},diff:'medio',bestD:{facil:0,medio:0,dificil:0,impossivel:0},mlv:{dist:0,ban:0,perf:0,combo:0,pw:0},
-  life:{runs:0,perf:0,flips:0,ban:0,maxCombo:0,bosses:0,showers:0,portals:0,springs:0,bestAny:0,dailyDone:0,lv:{}},ach:{},daily:{last:'',streak:0},chal:{date:'',best:0,done:false},tut:false,mig3:false};
+  life:{runs:0,perf:0,flips:0,ban:0,maxCombo:0,bosses:0,showers:0,portals:0,springs:0,bestAny:0,dailyDone:0,lv:{}},ach:{},daily:{last:'',streak:0},chal:{date:'',best:0,done:false},tut:false,mig3:false,name:'Chimp',tutRw:false,pr:{w:0,d:'facil',slow:0,ev:''},mig4:false};
 const clone=o=>JSON.parse(JSON.stringify(o));
 function merge(a,b){for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')merge(a[k],b[k]);else if(b[k]!==undefined)a[k]=b[k];}return a;}
 let SAVE;try{SAVE=merge(clone(DEF),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){SAVE=clone(DEF)}
@@ -75,6 +94,8 @@ if(!SAVE.mig2){const PM={classico:'castanho',dourado:'dourado',ninja:'chocolate'
  if(SAVE.skin&&PM[SAVE.skin]){SAVE.eq.traje=SAVE.skin;SAVE.eq.pelo=PM[SAVE.skin];}SAVE.mig2=true;}
 if(!DIFF_IDS.includes(SAVE.diff)||isLocked(SAVE.diff))SAVE.diff='medio';
 if(!SAVE.mig3){SAVE.life.runs=SAVE.runs||0;SAVE.life.bestAny=Math.max(SAVE.best||0,...Object.values(SAVE.bestD).map(v=>v||0));if((SAVE.runs||0)>0)SAVE.tut=true;SAVE.mig3=true;}
+if(!SAVE.mig4){if(SAVE.tut)SAVE.tutRw=true;SAVE.mig4=true;}
+if(typeof SAVE.name!=='string'||!SAVE.name.trim())SAVE.name='Chimp';
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(SAVE))}catch(e){}}
 
 const UPG=[
@@ -92,7 +113,8 @@ const CATS={
   {id:'ninja',nome:'Ninja Galáctico',preco:600,traje:'#2a2c45',det:'#ff2e63',visor:'#ff2e63',flut:.08},
   {id:'robo',nome:'Robo-Traje',preco:1000,traje:'#4f5fd0',det:'#39ff88',visor:'#39ff88',flut:.06,shield:true},
   {id:'lava',nome:'Traje de Lava',preco:1600,traje:'#40201a',det:'#ff4d00',visor:'#ff4d00',flut:.10,cap:.15},
-  {id:'galaxia',nome:'Rei da Galáxia',preco:2500,traje:'#1b0f3a',det:'#ffd700',visor:'#c77dff',flut:.14,ban:.15,rb:true}]},
+  {id:'galaxia',nome:'Rei da Galáxia',preco:2500,traje:'#1b0f3a',det:'#ffd700',visor:'#c77dff',flut:.14,ban:.15,rb:true},
+  {id:'noel',nome:'Traje de Papai Noel',preco:900,traje:'#d32f2f',det:'#ffffff',visor:'#ffd54f',flut:.08,ban:.1,season:'natal'}]},
  jet:{nome:'Jetpacks',ic:'🎒',items:[
   {id:'padrao',nome:'Jetpack Padrão',preco:0,body:'#8d97a8',flame:'#ffb300',style:1},
   {id:'eco',nome:'Jato Econômico',preco:250,body:'#43a047',flame:'#7dff9a',style:1,thr:.95,cons:.7,regen:1.2},
@@ -100,7 +122,8 @@ const CATS={
   {id:'solar',nome:'Planador Solar',preco:900,body:'#ffca28',flame:'#fff176',style:3,cons:.85,regen:2.2,flut:.04},
   {id:'bolha',nome:'Bolha Flutuante',preco:1200,body:'#4dd0e1',flame:'#b2ebf2',style:4,thr:.9,cons:.9,flut:.10},
   {id:'duplo',nome:'Foguete Duplo',preco:1600,body:'#5c6bc0',flame:'#80d8ff',style:2,thr:1.2,cons:.8,cap:1.25,flut:.03},
-  {id:'quantico',nome:'Jetpack Quântico',preco:3500,body:'#1d1830',flame:'#e040fb',style:5,thr:1.35,cons:.55,cap:1.35,regen:1.5,flut:.06}]},
+  {id:'quantico',nome:'Jetpack Quântico',preco:3500,body:'#1d1830',flame:'#e040fb',style:5,thr:1.35,cons:.55,cap:1.35,regen:1.5,flut:.06},
+  {id:'bengala',nome:'Jato Bengala Doce',preco:1300,body:'#ffffff',flame:'#7fffd4',style:6,thr:1.15,cons:.75,cap:1.15,flut:.05,season:'natal'}]},
  pelo:{nome:'Pelagem',ic:'🐵',items:[
   {id:'castanho',nome:'Castanho',preco:0,pelo:'#8b5a2b',rosto:'#f2c99b'},
   {id:'dourado',nome:'Dourado',preco:120,pelo:'#b5762a',rosto:'#ffe0a3'},
@@ -110,17 +133,21 @@ const CATS={
   {id:'neve',nome:'Neve',preco:300,pelo:'#e8e8f0',rosto:'#ffd9e0'},
   {id:'lava',nome:'Lava',preco:400,pelo:'#3b1a12',rosto:'#ff9d5c'},
   {id:'cosmico',nome:'Cósmico',preco:500,pelo:'#5b2d8c',rosto:'#f0c8ff'},
-  {id:'arcoiris',nome:'Arco-Íris',preco:1500,pelo:'#c33',rosto:'#ffe9f5',rb:true}]},
+  {id:'arcoiris',nome:'Arco-Íris',preco:1500,pelo:'#c33',rosto:'#ffe9f5',rb:true},
+  {id:'gengibre',nome:'Biscoito de Gengibre',preco:300,pelo:'#a0522d',rosto:'#f5d0a9',season:'natal'}]},
  hat:{nome:'Chapéus',ic:'🎩',items:[
   {id:'nenhum',nome:'Nenhum',preco:0},{id:'bone',nome:'Boné',preco:100},{id:'antena',nome:'Antenas Alien',preco:150},
   {id:'helice',nome:'Boné Hélice',preco:250},{id:'pirata',nome:'Pirata',preco:300},{id:'cartola',nome:'Cartola',preco:350},
-  {id:'viking',nome:'Viking',preco:450},{id:'mago',nome:'Mago',preco:600},{id:'coroa',nome:'Coroa',preco:1000}]},
+  {id:'viking',nome:'Viking',preco:450},{id:'mago',nome:'Mago',preco:600},{id:'coroa',nome:'Coroa',preco:1000},
+  {id:'gorro',nome:'Gorro de Noel',preco:200,season:'natal'},{id:'rena',nome:'Chifres de Rena',preco:250,season:'natal'}]},
  glass:{nome:'Óculos',ic:'🕶️',items:[
   {id:'nenhum',nome:'Nenhum',preco:0},{id:'nerd',nome:'Nerd',preco:80},{id:'escuros',nome:'Escuros',preco:150},
-  {id:'3d',nome:'Óculos 3D',preco:200},{id:'coracao',nome:'Corações',preco:250},{id:'estrela',nome:'Estrelas',preco:300},{id:'laser',nome:'Visor Laser',preco:700}]},
+  {id:'3d',nome:'Óculos 3D',preco:200},{id:'coracao',nome:'Corações',preco:250},{id:'estrela',nome:'Estrelas',preco:300},{id:'laser',nome:'Visor Laser',preco:700},
+  {id:'floco',nome:'Floco de Neve',preco:180,season:'natal'}]},
  trail:{nome:'Rastros',ic:'✨',items:[
   {id:'nenhum',nome:'Nenhum',preco:0,ic:'🚫'},{id:'bolhas',nome:'Bolhas',preco:150,ic:'🫧'},{id:'estrelas',nome:'Estrelas',preco:200,ic:'⭐'},
-  {id:'fogo',nome:'Fogo',preco:300,ic:'🔥'},{id:'coracoes',nome:'Corações',preco:350,ic:'💖'},{id:'bananas',nome:'Bananas',preco:500,ic:'🍌'},{id:'arcoiris',nome:'Arco-Íris',preco:900,ic:'🌈'}]}};
+  {id:'fogo',nome:'Fogo',preco:300,ic:'🔥'},{id:'coracoes',nome:'Corações',preco:350,ic:'💖'},{id:'bananas',nome:'Bananas',preco:500,ic:'🍌'},{id:'arcoiris',nome:'Arco-Íris',preco:900,ic:'🌈'},
+  {id:'neve',nome:'Flocos de Neve',preco:220,ic:'❄️',season:'natal'},{id:'presentes',nome:'Presentes',preco:400,ic:'🎁',season:'natal'}]}};
 const findItem=(c,id)=>CATS[c].items.find(i=>i.id===id)||CATS[c].items[0];
 function look(over){const e=Object.assign({},SAVE.eq,over||{}),tr=findItem('traje',e.traje),pe=findItem('pelo',e.pelo);
  return{pelo:pe.pelo,rosto:pe.rosto,rbFur:!!pe.rb,traje:tr.traje,det:tr.det,visor:tr.visor,rbSuit:!!tr.rb,jet:findItem('jet',e.jet),hat:e.hat,glass:e.glass};}

@@ -6,12 +6,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0b0820">
-<title>Macaco Espacial</title>
+<title>StarChimp</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Macaco Espacial">
+<meta name="apple-mobile-web-app-title" content="StarChimp">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,11 +23,11 @@
 
 <div id="menu" class="ui show">
   <div id="menuTop"><button id="bChest">🎁 Baú</button><button id="bDaily">📅 Desafio do Dia</button></div>
-  <div class="title">MACACO<br><span>ESPACIAL</span></div>
+  <div class="title">STAR<br><span>CHIMP</span></div>
   <div class="seg diffs" id="segDiff"></div>
-  <div class="stats"><span>🏆 <b id="mBest">0</b> m</span><span>🍌 <b id="mBan">0</b></span></div>
+  <div class="stats"><span>🐵 <b id="mName">Chimp</b></span><span>🏆 <b id="mBest">0</b> m</span><span>🍌 <b id="mBan">0</b></span></div>
   <button class="big" id="bPlay">▶ JOGAR</button>
-  <div class="row"><button id="bShop">🛒 Loja</button><button id="bMis">🎯 Metas</button><button id="bSet">⚙️ Config</button><button class="green" id="bInstall" style="display:none">📲 Instalar</button></div>
+  <div class="row"><button id="bShop">🛒 Loja</button><button id="bMis">🎯 Metas</button><button id="bPractice">🧪 Treino</button><button id="bTutMode">🎓 Tutorial</button><button id="bSet">⚙️ Config</button><button class="green" id="bInstall" style="display:none">📲 Instalar</button></div>
   <div id="ver"></div>
 </div>
 
@@ -58,13 +58,14 @@
 <div id="settings" class="ui"><div class="panel">
   <div class="phead"><button class="ghost" data-back>◀</button><h2>⚙️ Configurações</h2><span></span></div>
   <div class="scroll">
+    <div class="set"><div><div class="lb">🐵 Nome do seu macaco</div><small>Aparece no jogo, no fim da partida e ao desafiar amigos</small></div><input type="text" id="nameIn" maxlength="14" placeholder="Chimp" autocomplete="off" enterkeyhint="done"></div>
     <div class="set"><div><div class="lb">🎮 Botões</div><small id="ctrlHelp"></small></div>
       <div class="seg" id="segSide"><button data-v="0">🔥 Esq · 🤚 Dir</button><button data-v="1">🤚 Esq · 🔥 Dir</button></div></div>
     <div class="set"><div class="lb">🔊 Efeitos sonoros</div><div class="seg" id="segSfx"><button data-v="1">Ligado</button><button data-v="0">Desligado</button></div></div>
     <div class="set"><div class="lb">🎵 Música</div><div class="seg" id="segMus"><button data-v="1">Ligada</button><button data-v="0">Desligada</button></div></div>
     <div class="set"><div class="lb">📳 Vibração</div><div class="seg" id="segVib"><button data-v="1">Ligada</button><button data-v="0">Desligada</button></div></div>
     <div class="set"><div><div class="lb">⚡ Modo leve</div><small>Menos efeitos visuais, para celulares mais simples</small></div><div class="seg" id="segLite"><button data-v="0">Desligado</button><button data-v="1">Ligado</button></div></div>
-    <div class="set"><div><div class="lb">🎓 Tutorial</div><small>Mostra as instruções de novo na próxima partida</small></div><button id="bTut">Rever tutorial</button></div>
+    <div class="set"><div><div class="lb">🎓 Tutorial</div><small>Aprenda (ou relembre) os controles passo a passo</small></div><button id="bTut">Abrir tutorial</button></div>
     <div class="set"><div><div class="lb">💾 Backup do progresso</div><small>Guarde um código para não perder nada ao trocar de celular</small></div><button class="green" id="bBackup">Abrir</button></div>
     <div class="set"><div><div class="lb">🗑️ Apagar progresso</div><small>Zera recorde, bananas, melhorias e missões</small></div><button class="ghost" id="bReset">Apagar</button></div>
   </div>
@@ -95,6 +96,18 @@
     <div id="chestMsg"></div>
     <div class="days" id="chestDays"></div>
     <button class="big" id="bOpenChest" style="animation:none">ABRIR</button>
+  </div>
+</div></div>
+
+<div id="practice" class="ui"><div class="panel" style="max-width:700px">
+  <div class="phead"><button class="ghost" data-back>◀</button><h2>🧪 Modo Treino</h2><span></span></div>
+  <div class="scroll">
+    <p class="note" style="margin:0 auto 8px;max-width:none">Aqui você <b>não perde</b>: se cair, volta na hora. A tempestade fica parada. Bananas, missões e recordes do treino não contam.</p>
+    <div class="set"><div class="lb">🌍 Mundo</div><div class="seg" id="segPW"></div></div>
+    <div class="set"><div class="lb">🎚️ Nível</div><div class="seg" id="segPD"></div></div>
+    <div class="set"><div class="lb">🐢 Velocidade</div><div class="seg" id="segPS"></div></div>
+    <div class="set"><div class="lb">🎯 Treinar evento</div><div class="seg" id="segPE"></div></div>
+    <div class="row" style="margin-top:6px"><button class="big" id="bStartPr" style="animation:none">▶ Começar treino</button></div>
   </div>
 </div></div>
 

@@ -1,4 +1,4 @@
-# 🐵 Macaco Espacial — v2.0
+# 🐵 StarChimp — v2.1
 
 Jogo infinito 2D com física: balance entre asteroides, fuja da tempestade solar e colete bananas!
 Funciona como app instalável (PWA) em Android e iPhone, inclusive sem internet.
@@ -13,6 +13,12 @@ Funciona como app instalável (PWA) em Android e iPhone, inclusive sem internet.
 | `js/ui.js` | Telas: menu, loja, metas, baú diário, backup, compartilhar e PWA |
 | `sw.js` | Service worker: modo offline e aviso de nova versão |
 | `manifest.webmanifest` + ícones | Instalação como app |
+
+## Edições especiais (datas comemorativas)
+Em `js/data.js`:
+- `SEASONS` define cada temporada (`de`/`ate` no formato MM-DD e `teaser` = dias de prévia antes).
+- Para criar itens de uma temporada, adicione `season:'id'` ao item em `CATS` (ex.: `season:'halloween'`).
+- Itens sazonais só podem ser comprados durante a temporada. Quem comprou fica com eles para sempre.
 
 ## Como publicar uma nova versão
 1. Envie os arquivos alterados para o repositório, **mantendo a pasta `js/`** (Add file → Upload files → arraste a pasta inteira).

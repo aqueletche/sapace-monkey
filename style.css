@@ -110,3 +110,16 @@ input[type=range]{width:150px;accent-color:#ff8a00}
 .recbar span{position:absolute;inset:0;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;text-shadow:0 1px 2px #000}
 .chips2{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.chips2:empty{display:none}.chips2 span{background:#1fb35a;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:800}
 textarea{width:100%;min-height:90px;background:#120c30;color:#fff;border:2px solid #3c2f80;border-radius:10px;padding:8px;font-size:12px;user-select:text;-webkit-user-select:text;touch-action:auto;word-break:break-all;font-family:ui-monospace,monospace}
+
+/* v2.1 */
+#menu .row button{font-size:clamp(13px,4vh,18px);padding:9px 14px}
+input[type=text]{background:#120c30;color:#fff;border:2px solid #5b3fd0;border-radius:12px;padding:8px 12px;font:inherit;font-weight:800;font-size:16px;width:180px;user-select:text;-webkit-user-select:text;touch-action:auto}
+input[type=text]:focus{outline:none;border-color:#ff8a00}
+.seasonTab{background:linear-gradient(90deg,#c62828,#2e7d32)!important;box-shadow:0 0 12px rgba(255,80,80,.6)!important}
+.seasonTab.on{outline:3px solid #ffd93b}
+.seasonHead{grid-column:1/-1;background:linear-gradient(90deg,#b71c1c,#1b5e20);border-radius:14px;padding:10px 12px;font-weight:900;font-size:17px;text-align:center}
+.seasonHead small{display:block;font-size:12px;font-weight:600;opacity:.9;margin-top:2px}
+#shopGrid .card.seasonal{background:linear-gradient(160deg,#3a1630,#1d3a2a)}
+.ctag{font-size:10.5px;font-weight:800;opacity:.75}
+.stag{display:inline-block;animation:pulse 1.2s infinite}
+#practice .seg{flex-wrap:wrap}

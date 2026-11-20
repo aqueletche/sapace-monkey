@@ -1,10 +1,10 @@
 'use strict';
-// Macaco Espacial — telas, loja, metas, baú, backup e PWA
+// StarChimp — telas, loja, metas, baú, backup e PWA
 /* ---------- UI ---------- */
 function show(id){document.querySelectorAll('.ui').forEach(e=>e.classList.toggle('show',e.id===id));if(typeof updBanner==='function')updBanner();$('#bPause').style.display=(!id&&state==='play')?'flex':'none';}
 function refreshBadges(){const av=chestAvail(),cb=$('#bChest');cb.innerHTML=av?'🎁 Baú diário!<small>toque para abrir</small>':`🎁 Baú<small>🔥 ${SAVE.daily.streak} dia(s)</small>`;cb.classList.toggle('glow',av);
  const done=SAVE.chal.date===today()&&SAVE.chal.done;$('#bDaily').innerHTML=`📅 Desafio do Dia<small>${done?'✔ cumprido hoje':'meta '+chalTarget()+' m · +200 🍌'}</small>`;}
-function refreshMenu(){refreshBadges();$('#mBest').textContent=SAVE.bestD[SAVE.diff];$('#mBan').textContent=SAVE.bananas;
+function refreshMenu(){refreshBadges();$('#mName').textContent=SAVE.name;const si=curSeason();$('#bShop').innerHTML=si?`🛒 Loja <span class="stag">${si.se.ic}</span>`:'🛒 Loja';$('#mBest').textContent=SAVE.bestD[SAVE.diff];$('#mBan').textContent=SAVE.bananas;
  const el=$('#segDiff');el.innerHTML='';for(const id of DIFF_IDS){const d=DIFF[id],b=document.createElement('button');const lk=isLocked(id);b.innerHTML=lk?`🔒 ${d.nome}<small>${Math.floor(SAVE.bestD.dificil||0)}/${UNLOCK_M} m no Difícil</small>`:`${d.nome}<small>${d.desc}</small>`;if(lk)b.style.opacity=.6;
   if(id===SAVE.diff){b.classList.add('on');b.style.background=d.cor;}b.onclick=()=>{au();if(lk){toast(`🔒 Alcance ${UNLOCK_M} m no Difícil para desbloquear o Impossível!`);SFX.bump();return;}SAVE.diff=id;persist();SFX.rel();refreshMenu();};el.appendChild(b);}}
 async function startGame(mode){au();if(typeof mode!=='string')mode='normal';
@@ -14,9 +14,10 @@ function doPause(){if(state!=='play')return;state='pause';show('pause');}
 function doResume(){state='play';input.ptr.clear();refreshInput();last=performance.now();show(null);}
 function goMenu(){state='menu';refreshMenu();show('menu');}
 $('#bPlay').onclick=()=>startGame('normal');$('#bAgain').onclick=()=>startGame(G?G.mode:'normal');$('#bDaily').onclick=()=>startGame('daily');
+$('#bTutMode').onclick=()=>startGame('tutorial');$('#bPractice').onclick=openPractice;$('#bStartPr').onclick=()=>startGame('practice');
 $('#bChest').onclick=openChestUI;$('#bOpenChest').onclick=openChest;$('#chestBox').onclick=openChest;$('#bShare').onclick=shareRun;
 $('#bPause').onclick=e=>{e.stopPropagation();doPause();};$('#bResume').onclick=doResume;
-$('#bPMenu').onclick=()=>{if(G&&G.mode!=='daily'){SAVE.bestD[G.diff]=Math.max(SAVE.bestD[G.diff],Math.floor(G.dist));SAVE.best=Math.max(SAVE.best,Math.floor(G.dist));}persist();goMenu();};$('#bOMenu').onclick=goMenu;
+$('#bPMenu').onclick=()=>{if(G&&G.mode==='normal'){SAVE.bestD[G.diff]=Math.max(SAVE.bestD[G.diff],Math.floor(G.dist));SAVE.best=Math.max(SAVE.best,Math.floor(G.dist));}persist();goMenu();};$('#bOMenu').onclick=goMenu;
 $('#bShop').onclick=()=>openShop('menu');$('#bOShop').onclick=()=>openShop('over');
 $('#bMis').onclick=openMeta;
 $('#bSet').onclick=()=>{uiFrom='menu';renderSet();show('settings');};$('#bPSet').onclick=()=>{uiFrom='pause';renderSet();show('settings');};
@@ -26,7 +27,8 @@ $('#bRevive').onclick=()=>{if(SAVE.bananas<120||G.revived)return;SAVE.bananas-=1
  G.ast=G.ast.filter(a=>Math.abs(a.x-m.x)>120||a.type==='rock');state='play';input.ptr.clear();refreshInput();show(null);SFX.pow();};
 let shopTab='up',subTab='pelo',tryOn=null;
 const TABS=[['up','🚀 Melhorias'],['traje','👕 Trajes'],['jet','🎒 Jetpacks'],['look','🐵 Visual']],SUBS=['pelo','hat','glass','trail'];
-function openShop(from){uiFrom=from;tryOn=null;renderShop();show('shop');}
+function openShop(from){uiFrom=from;tryOn=null;if(curSeason())shopTab='season';else if(shopTab==='season')shopTab='up';renderShop();show('shop');}
+function shopTabs(){const si=curSeason(),t=[...TABS];if(si)t.unshift(['season',`${si.se.ic} ${si.se.nome}`]);return t;}
 const pct=v=>(v>0?'+':'')+Math.round(v*100)+'%';
 function chips(cat,it){const c=[];
  if(it.flut)c.push(`🪶 Flutua ${pct(it.flut)}`);if(it.thr&&it.thr!==1)c.push(`🔥 Força ${pct(it.thr-1)}`);if(it.cons&&it.cons!==1)c.push(`⛽ Gasto ${pct(it.cons-1)}`);
@@ -34,7 +36,7 @@ function chips(cat,it){const c=[];
  if(it.mag)c.push(`🧲 Ímã ${pct(it.mag)}`);if(it.ban)c.push(`🍌 Bônus ${pct(it.ban)}`);if(it.shield)c.push('🛡️ Escudo inicial');
  if(!c.length&&(cat==='traje'||cat==='jet'))c.push('Padrão');return c.map(x=>`<span>${x}</span>`).join('');}
 function renderShop(){$('#sBan').textContent=SAVE.bananas;
- const tb=$('#shopTabs');tb.innerHTML='';for(const [id,lb] of TABS){const b=document.createElement('button');b.textContent=lb;if(id===shopTab)b.className='on';b.onclick=()=>{shopTab=id;tryOn=null;renderShop();};tb.appendChild(b);}
+ const tb=$('#shopTabs');tb.innerHTML='';if(shopTab==='season'&&!curSeason())shopTab='up';for(const [id,lb] of shopTabs()){const b=document.createElement('button');b.textContent=lb;b.className=(id===shopTab?'on':'')+(id==='season'?' seasonTab':'');b.onclick=()=>{shopTab=id;tryOn=null;renderShop();};tb.appendChild(b);}
  const sb=$('#subTabs');sb.innerHTML='';sb.style.display=shopTab==='look'?'':'none';
  if(shopTab==='look')for(const id of SUBS){const b=document.createElement('button');b.textContent=CATS[id].ic+' '+CATS[id].nome;if(id===subTab)b.className='on';b.onclick=()=>{subTab=id;tryOn=null;renderShop();};sb.appendChild(b);}
  const g=$('#shopGrid');g.innerHTML='';
@@ -43,23 +45,31 @@ function renderShop(){$('#sBan').textContent=SAVE.bananas;
   const b=document.createElement('button');b.className=max?'ghost':'green';b.textContent=max?'MÁXIMO ✔':`🍌 ${c}`;b.disabled=max||SAVE.bananas<c;
   b.onclick=e=>{e.stopPropagation();if(SAVE.bananas<c||max)return;SAVE.bananas-=c;SAVE.up[u.id]++;persist();au();SFX.buy();renderShop();};d.appendChild(b);g.appendChild(d);}
   renderPvInfo();return;}
+ if(shopTab==='season'){const si=curSeason();
+  g.insertAdjacentHTML('beforeend',`<div class="seasonHead">${si.se.ic} Edição especial de ${si.se.nome}<small>${si.active?`Itens à venda só até ${si.end?si.end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'o fim da temporada'} · faltam ${si.days} dia(s)! Depois, só fica com quem comprou.`:`Chega em ${si.days} dia(s)! Já dá para provar os itens 👀`}</small></div>`);
+  for(const [c,it] of seasonItems(si.se.id))itemCard(c,it,g,si.active?null:`🔒 em ${si.days} dia(s)`,true);
+  renderPvInfo();return;}
  const cat=shopTab==='look'?subTab:shopTab;
- for(const it of CATS[cat].items){const own=SAVE.own[cat].includes(it.id),eq=SAVE.eq[cat]===it.id,tr=tryOn&&tryOn.cat===cat&&tryOn.id===it.id;
-  const d=document.createElement('div');d.className='card'+(eq?' sel':'')+(tr?' try':'');
+ for(const it of CATS[cat].items){if(it.season&&!SAVE.own[cat].includes(it.id))continue;itemCard(cat,it,g,null,false);}
+ renderPvInfo();}
+const CATNAME={traje:'👕 Traje',jet:'🎒 Jetpack',pelo:'🐵 Pelagem',hat:'🎩 Chapéu',glass:'🕶️ Óculos',trail:'✨ Rastro'};
+function itemCard(cat,it,g,lock,showCat){const own=SAVE.own[cat].includes(it.id),eq=SAVE.eq[cat]===it.id,tr=tryOn&&tryOn.cat===cat&&tryOn.id===it.id;
+  const d=document.createElement('div');d.className='card'+(eq?' sel':'')+(tr?' try':'')+(it.season?' seasonal':'');
+  if(showCat)d.insertAdjacentHTML('beforeend',`<div class="ctag">${CATNAME[cat]}</div>`);
   if(cat==='trail'){d.insertAdjacentHTML('beforeend',`<div class="ic" style="text-align:center;font-size:38px">${it.ic}</div>`);}
   else{const pc=document.createElement('canvas');pc.className='mini';pc.width=168;pc.height=126;d.appendChild(pc);miniPreview(pc,cat,it.id);}
   d.insertAdjacentHTML('beforeend',`<div class="nm">${it.nome}</div>${(cat==='traje'||cat==='jet')?`<div class="chips">${chips(cat,it)}</div>`:''}`);
   const b=document.createElement('button');
   if(eq){b.className='ghost';b.textContent='Usando ✔';b.disabled=true;}
   else if(own){b.textContent='Usar';b.onclick=e=>{e.stopPropagation();SAVE.eq[cat]=it.id;tryOn=null;persist();au();SFX.rel();renderShop();checkAch();};}
+  else if(lock){b.className='ghost';b.textContent=lock;b.disabled=true;}
   else{b.className='gold';b.textContent=`🍌 ${it.preco}`;b.disabled=SAVE.bananas<it.preco;
    b.onclick=e=>{e.stopPropagation();if(SAVE.bananas<it.preco)return;SAVE.bananas-=it.preco;SAVE.own[cat].push(it.id);SAVE.eq[cat]=it.id;tryOn=null;persist();au();SFX.buy();toast(`✨ ${it.nome} comprado!`);renderShop();checkAch();};}
   d.onclick=()=>{tryOn=(tr||eq)?null:{cat,id:it.id};au();renderShop();};
   d.appendChild(b);g.appendChild(d);}
- renderPvInfo();}
 function overObj(){return tryOn?{[tryOn.cat]:tryOn.id}:{};}
 function renderPvInfo(){const o=overObj();const it=tryOn?findItem(tryOn.cat,tryOn.id):null;
- $('#pvName').innerHTML=it?`👀 Provando: ${it.nome}<br><small style="opacity:.7;font-weight:600">toque de novo para tirar</small>`:'Seu macaco';
+ $('#pvName').innerHTML=it?`👀 Provando: ${it.nome}<br><small style="opacity:.7;font-weight:600">toque de novo para tirar</small>`:`🐵 ${esc(SAVE.name)}`;
  const a=stats(),b=stats(o);
  const rows=[['🪶 Flutuação',b.flut/.3,a.flut/.3,b.flut,v=>pct(v),b.flut-a.flut],
   ['🔥 Força',(b.thr-.8)/.6,(a.thr-.8)/.6,b.thr-1,v=>pct(v),b.thr-a.thr],
@@ -78,7 +88,8 @@ function drawShopPreview(){const pc=$('#pv'),c2=pc.getContext('2d');c2.setTransf
    if(tr==='bananas'){c2.save();c2.translate(x,y);c2.scale(1.4,1.4);drawBanana(0,0,T*3+i,1);c2.restore();}
    else if(tr==='bolhas'){c2.strokeStyle='#9fe8ff';c2.lineWidth=2;c2.beginPath();c2.arc(x,y,4+i%3*2,0,7);c2.stroke();}
    else if(tr==='fogo'||tr==='arcoiris'){c2.fillStyle=tr==='fogo'?(i%2?'#ff5a00':'#ffb300'):`hsl(${(i*50+T*200)%360},90%,60%)`;c2.beginPath();c2.arc(x,y,9-i,0,7);c2.fill();}
-   else{c2.font='18px system-ui';c2.textAlign='center';c2.textBaseline='middle';c2.fillStyle=tr==='estrelas'?'#ffd93b':'#ff4d8d';c2.fillText(tr==='estrelas'?'★':'♥',x,y);}}c2.globalAlpha=1;}
+   else if(tr==='presentes'){c2.fillStyle=['#e53935','#43a047','#1e88e5','#fdd835'][i%4];c2.fillRect(x-6,y-6,12,12);c2.fillStyle='#fff';c2.fillRect(x-1,y-6,2,12);c2.fillRect(x-6,y-1,12,2);}
+   else{c2.font='18px system-ui';c2.textAlign='center';c2.textBaseline='middle';c2.fillStyle=tr==='estrelas'?'#ffd93b':tr==='neve'?'#e0f7ff':'#ff4d8d';c2.fillText(tr==='estrelas'?'★':tr==='neve'?'❄':'♥',x,y);}}c2.globalAlpha=1;}
   c2.translate(170,150+bob);c2.scale(3.4,3.4);drawMonkey(0,0,Math.sin(T*1.5)*.12,L,{jet:Math.sin(T*2.5)>-.3?1:0});
  }finally{ctx=o;c2.setTransform(1,0,0,1,0,0);}}
 /* ---------- METAS (missões, conquistas, estatísticas) ---------- */
@@ -109,22 +120,31 @@ function renderChest(opened,rw,extra){const av=chestAvail()&&!opened,s=av?nextSt
   :(av?`Toque no baú para abrir!<br><small>🔥 Sequência: ${s} dia(s) — não quebre a corrente!</small>`:`Volte amanhã para o próximo baú!<br><small>🔥 Sequência: ${SAVE.daily.streak} dia(s)</small>`);
  $('#bOpenChest').style.display=av?'':'none';}
 function openChest(){if(!chestAvail())return;au();const s=nextStreak(),di=(s-1)%7;let rw=CHEST[di],extra='';
- if(di===6){const pool=[];for(const c of['hat','glass','trail','pelo'])for(const it of CATS[c].items)if(!SAVE.own[c].includes(it.id)&&it.preco<=600)pool.push([c,it]);
+ if(di===6){const pool=[];for(const c of['hat','glass','trail','pelo'])for(const it of CATS[c].items)if(!SAVE.own[c].includes(it.id)&&it.preco<=600&&!it.season)pool.push([c,it]);
   if(pool.length){const [c,it]=pool[Math.floor(Math.random()*pool.length)];SAVE.own[c].push(it.id);extra=`${CATS[c].ic} ${it.nome}`;}else rw+=300;}
  SAVE.daily={last:today(),streak:s};SAVE.bananas+=rw;persist();SFX.chest();vib([40,30,80]);renderChest(true,rw,extra);refreshMenu();checkAch();}
 /* ---------- COMPARTILHAR ---------- */
 async function shareRun(){if(!G)return;const d=Math.floor(G.dist),url=location.href.split('#')[0].split('?')[0];
- const txt=G.mode==='daily'?`📅 Desafio do Dia ${today().split('-').reverse().join('/')}: fiz ${d} m no Macaco Espacial! 🐵 Consegue me superar?`:`🐵 Fiz ${d} m no Macaco Espacial (nível ${Dz().nome})! Consegue me superar? 🚀`;
- try{if(navigator.share){await navigator.share({title:'Macaco Espacial',text:txt,url});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+ const nm=SAVE.name;const txt=G.mode==='daily'?`📅 Desafio do Dia ${today().split('-').reverse().join('/')}: ${nm} voou ${d} m no StarChimp! 🐵 Consegue superar?`:`🐵 ${nm} voou ${d} m no StarChimp (nível ${Dz().nome})! Consegue superar? 🚀`;
+ try{if(navigator.share){await navigator.share({title:'StarChimp',text:txt,url});return;}}catch(e){if(e&&e.name==='AbortError')return;}
  try{await navigator.clipboard.writeText(txt+' '+url);toast('📋 Copiado! Cole no WhatsApp para desafiar');}catch(e){toast(txt);}}
 /* ---------- BACKUP ---------- */
 const bkCode=()=>'ME1:'+btoa(unescape(encodeURIComponent(JSON.stringify(SAVE))));
 let bkArm=false;
 function openBackup(){$('#bkText').value='';bkArm=false;$('#bBkLoad').textContent='📥 Restaurar código colado';show('backup');}
+/* ---------- TREINO ---------- */
+function openPractice(){uiFrom='menu';renderPractice();show('practice');}
+function segP(id,opts,val,cb){const el=$(id);el.innerHTML='';for(const [v,lb] of opts){const b=document.createElement('button');b.innerHTML=lb;if(String(v)===String(val))b.className='on';b.onclick=()=>{au();cb(v);persist();renderPractice();};el.appendChild(b);}}
+function renderPractice(){const P=SAVE.pr;
+ segP('#segPW',WORLDS.map((w,i)=>[i,`${w.ic} ${w.nome.split(' ').slice(-1)[0]}`]),P.w,v=>P.w=+v);
+ segP('#segPD',DIFF_IDS.filter(id=>!isLocked(id)).map(id=>[id,DIFF[id].nome]),isLocked(P.d)?'facil':P.d,v=>P.d=v);
+ segP('#segPS',[[0,'Normal'],[1,'🐢 Câmera lenta']],P.slow,v=>P.slow=+v);
+ segP('#segPE',[['','Nenhum'],['met','☄️ Meteoros'],['boss','🐙 Chefe']],P.ev,v=>P.ev=v);}
 function seg(id,val,cb){const el=$(id);el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.v===String(val));b.onclick=()=>{cb(b.dataset.v);persist();renderSet();};});}
 let resetArm=false;
 function renderSet(){const s=SAVE.set;
  seg('#segSide',s.swap?'1':'0',v=>s.swap=v==='1');
+ const ni=$('#nameIn');if(document.activeElement!==ni)ni.value=SAVE.name;
  seg('#segLite',s.lite?'1':'0',v=>{s.lite=v==='1';s.liteAsked=true;resize();});
  seg('#segSfx',s.sfx?'1':'0',v=>s.sfx=v==='1');seg('#segMus',s.music?'1':'0',v=>s.music=v==='1');seg('#segVib',s.vib?'1':'0',v=>s.vib=v==='1');
 
@@ -133,7 +153,9 @@ function renderSet(){const s=SAVE.set;
 
 
 $('#bReset').onclick=()=>{if(!resetArm){resetArm=true;renderSet();setTimeout(()=>{resetArm=false;renderSet();},3000);return;}const keep=SAVE.set;SAVE=clone(DEF);SAVE.set=keep;persist();resetArm=false;renderSet();toast('Progresso apagado');};
-$('#bTut').onclick=()=>{SAVE.tut=false;persist();toast('🎓 O tutorial vai aparecer na próxima partida');};
+const saveName=()=>{const v=$('#nameIn').value.replace(/[<>]/g,'').trim().slice(0,14);SAVE.name=v||'Chimp';$('#nameIn').value=SAVE.name;persist();refreshMenu();};
+$('#nameIn').addEventListener('change',saveName);$('#nameIn').addEventListener('blur',saveName);$('#nameIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#nameIn').blur();toast(`🐵 Olá, ${esc(SAVE.name)}!`);}});
+$('#bTut').onclick=()=>startGame('tutorial');
 $('#bBackup').onclick=openBackup;
 $('#bBkCopy').onclick=async()=>{const c=bkCode();$('#bkText').value=c;try{await navigator.clipboard.writeText(c);toast('📋 Código copiado!<br>Guarde no WhatsApp ou e-mail');}catch(e){$('#bkText').select();toast('Selecione o texto e copie');}};
 $('#bBkLoad').onclick=()=>{const v=$('#bkText').value.trim();let o=null;if(v.startsWith('ME1:')){try{o=JSON.parse(decodeURIComponent(escape(atob(v.slice(4)))));}catch(e){o=null;}}
